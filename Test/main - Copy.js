@@ -51,8 +51,8 @@ let bunnyDiffuse;
 
 // Lighting Properties
 var lightPosition = vec4(0.0, 3.0, 0.0, 1.0 );  
-var lightAmbient = vec4(0.4, 0.4, 0.4, 1.0 );
-var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
+var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
+var lightDiffuse = vec4( 0.8, 1.0, 0.5, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
 
 var materialShininess = 20.0;
@@ -184,12 +184,6 @@ function drawObjects(){
 
 
 function drawStopSign(){
-
-    stopSignDiffuse = stopSign.diffuseMap.get('StopMaterial');
-    stopSignSpecular = stopSign.specularMap.get('StopMaterial');
-    gl.uniform4fv(gl.getUniformLocation(program, "materialDiffuse"), flatten(stopSignDiffuse));
-    gl.uniform4fv(gl.getUniformLocation(program, "materialSpecular"), flatten(stopSignSpecular));
-
     stopSignPoints = pushToPoints(stopSignFaceVert);
     stopSignNormalsArray = pushToNormalsArray(stopSignFaceNorm); 
 
@@ -216,11 +210,6 @@ function drawStopSign(){
 
 
 function drawLamp() {
-    lampDiffuse = lamp.diffuseMap.get('LampMaterial');
-    lampSpecular = lamp.specularMap.get('LampMaterial');
-    //gl.uniform4fv(gl.getUniformLocation(program, "materialDiffuse"), flatten(lampDiffuse));
-    //gl.uniform4fv(gl.getUniformLocation(program, "materialSpecular"), flatten(lampSpecular));
-
     lampPoints = pushToPoints(lampFaceVert);
     lampNormalsArray = pushToNormalsArray(lampFaceNorm); 
 
@@ -247,13 +236,6 @@ function drawLamp() {
 
 
 function drawCar(){
-    console.log(car);
-    carDiffuse = car.diffuseMap.get('CarMaterial');
-    console.log(carDiffuse);
-    carSpecular = car.specularMap.get('CarMaterial');
-    //gl.uniform4fv(gl.getUniformLocation(program, "materialDiffuse"), flatten(carDiffuse));
-    //gl.uniform4fv(gl.getUniformLocation(program, "materialSpecular"), flatten(carSpecular));
-
     carPoints = pushToPoints(carFaceVert);
     carNormalsArray = pushToNormalsArray(carFaceNorm); 
 
@@ -313,6 +295,15 @@ function getAttributes(model){
             stopSignFaceVert = modelFaceVert;
             stopSignFaceNorm = modelFaceNorm;
             stopSignFaceTex = modelFaceTex;
+            stopSignDiffuse = model.diffuseMap.get('StopMaterial');
+            stopSignSpecular = model.specularMap.get('StopMaterial');
+            console.log(stopSignDiffuse);
+            console.log(stopSignSpecular);
+
+            gl.uniform4fv(gl.getUniformLocation(program, "materialDiffuse"), flatten(stopSignDiffuse));
+            gl.uniform4fv(gl.getUniformLocation(program, "materialSpecular"), flatten(stopSignSpecular));
+
+            transformObject("stopSign");
             console.log("stop get");
             break;
         case car:
@@ -320,13 +311,16 @@ function getAttributes(model){
             carFaceVert = modelFaceVert;
             carFaceNorm = modelFaceNorm;
             carFaceTex = modelFaceTex;
-            
+            carDiffuse = model.diffuseMap.get('CarMaterial');
+            carSpecular = model.specularMap.get('CarMaterial');
+            transformObject("car");
             break;
         case street:
             getData(model);
             streetFaceVert = modelFaceVert;
             streetFaceNorm = modelFaceNorm;
             streetFaceTex = modelFaceTex;
+            transformObject("street");
             console.log("street get");
             break;
         case lamp:
@@ -334,7 +328,9 @@ function getAttributes(model){
             lampFaceVert = modelFaceVert;
             lampFaceNorm = modelFaceNorm;
             lampFaceTex = modelFaceTex;
-            
+            lampDiffuse = model.diffuseMap.get('LampMaterial');
+            lampSpecular = model.specularMap.get('LampSpecular');
+            transformObject("lamp");
             console.log("lamp get");
             break;
         case bunny:
@@ -344,6 +340,8 @@ function getAttributes(model){
             break;
 
     }
+    pushToPoints(modelFaceVert);
+    pushToNormalsArray(modelFaceNorm);
 }
 
 
@@ -425,7 +423,7 @@ function transformObject(name) {
     var rotateMatrix,translateMatrix,scaleMatrix;
     switch(name){
         case "stopSign":
-            rotateMatrix = rotateY(-90);
+            rotateMatrix = rotateY(90);
             translateMatrix = translate(4,1,0);
             transformationMatrix = mult(translateMatrix,rotateMatrix);
             break;
