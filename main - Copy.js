@@ -66,13 +66,13 @@ let bunnyDiffuse;
 
 
 // Lighting Properties
-var lightPosition = vec4(0.0, 3.0, 1.0, 1.0 );  
+var lightPosition = vec4(-4.0, -5.0, 2.0, 1.0 );  
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
 
-var materialAmbient = vec4(0.5,0.5,0.5,1.0);
-var materialShininess = 20.0;
+var materialAmbient = vec4(0.2,0.2,0.2,1.0);
+var materialShininess = 200.0;
 
 // Camera Coordinates
 var eye;
@@ -263,6 +263,7 @@ function drawObjects(){
     drawLamp();
     drawCar();
     drawStreet();
+    //drawBunny();
 }
 
 
@@ -363,14 +364,18 @@ function drawLamp() {
 // Draw Car Object
 function drawCar(){
     // Get and Store Car Attributes (Coord,Normal,Tex)
+    stack = [];
     carPoints = pushToPoints(carFaceVert);
     carNormalsArray = pushToPoints(carFaceNorm); 
     carTexCoords = pushToPoints(carFaceTex);
-
-    if(carAnimation)
+    console.log(car);
+    if(carAnimation){
         animateCar();
-    else
+    }
+    else{
+        drawBunny();
         transformObject("car");
+    }
 
     // Create Buffer
     var vBuffer = gl.createBuffer();
@@ -402,13 +407,52 @@ function drawCar(){
 }
 
 
+// Draw Bunny
+function drawBunny(){
+    // Get and Store Bunny Attributes (Coord,Normal,Tex)
+    bunnyPoints = pushToPoints(bunnyFaceVert);
+    bunnyNormalsArray = pushToPoints(bunnyFaceNorm); 
+    bunnyTexCoords = pushToPoints(bunnyFaceTex);
+
+    transformObject("bunny");
+
+    // Create Buffer
+    var vBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(bunnyPoints), gl.STATIC_DRAW);
+
+    var vPosition = gl.getAttribLocation( program, "vPosition");
+    gl.vertexAttribPointer(vPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vPosition);
+
+    var vNormal = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, vNormal);
+    gl.bufferData(gl.ARRAY_BUFFER, flatten(bunnyNormalsArray), gl.STATIC_DRAW);
+
+    var vNormalPosition = gl.getAttribLocation( program, "vNormal");
+    gl.vertexAttribPointer(vNormalPosition, 4, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(vNormalPosition);
+
+    // Draw FACE BY FACE using the FACE Material
+    var n=0;
+    for(var i=0;i<bunny.faces.length;i++){
+        var faces = bunny.faces[i];
+        gl.uniform4fv(gl.getUniformLocation(program,"materialDiffuse"), flatten(bunny.diffuseMap.get(faces.material)));
+        gl.uniform4fv(gl.getUniformLocation(program,"materialSpecular"), flatten(bunny.specularMap.get(faces.material)));
+        gl.drawArrays(gl.TRIANGLES,n,faces.faceVertices.length);
+        n=n+faces.faceVertices.length;
+    }
+
+}
+
+
 // Draw Street
 function drawStreet(){
     // Get and Store Street Attributes (Coord,Normal,Tex)
     streetPoints = pushToPoints(streetFaceVert);
     streetNormalsArray = pushToPoints(streetFaceNorm); 
     streetTexCoords = pushToPoints(streetFaceTex);
-
+    console.log(street);
 
     transformObject("street");
 
@@ -510,6 +554,7 @@ function getAttributes(model){
             console.log("lamp get");
             break;
         case bunny:
+            getData(model);
             bunnyFaceVert = modelFaceVert;
             bunnyFaceNorm = modelFaceNorm;
             bunnyFaceTex = modelFaceTex;
@@ -609,6 +654,10 @@ function transformObject(name) {
             break;
         case "street":
             transformationMatrix = translate(0,0,0);
+            break;
+        case "bunny":
+            rotateMatrix = rotateY(90);
+            transformationMatrix = mult(translate(1.5,0.6,3),rotateMatrix);
             break;
     }
     

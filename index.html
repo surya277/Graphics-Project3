@@ -28,9 +28,9 @@
 
                 vec4 nm = vNormal;
                 nm.w = 1.0;
-                vec3 pos = (modelViewMatrix * nm).xyz;
+                vec3 pos = (modelViewMatrix * modelMatrix * nm).xyz;
                 light = normalize(lightPosition.xyz - pos);
-                normal = normalize(modelViewMatrix * vNormal).xyz;
+                normal = normalize(modelViewMatrix* modelMatrix * vNormal).xyz;
 
                 // Specular
                 V = normalize(-pos);
@@ -69,7 +69,7 @@
                 // Id = Ld Kd (l . n)
                 vec4 diffuse = lightDiffuse * materialDiffuse * dot(light,normal);
 
-                vec4 ambient = lightAmbient; //* materialAmbient;
+                vec4 ambient = lightAmbient * materialAmbient;
                 vec4 fColor;
 
                 if(lightCheck == 1.0)
