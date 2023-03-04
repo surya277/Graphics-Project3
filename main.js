@@ -1,3 +1,7 @@
+
+// SKYBOX WILL GET THE RIGHT TEXTURE THE 2nd time
+
+
 let canvas;
 let gl;
 let program;
@@ -52,6 +56,7 @@ let carDiffuse;
 let carPoints;
 let carNormalsArray;
 let carTexCoords;
+let carTransformation = mult(translate(0,0,3),rotateY(90));
 
 let streetFaceVert;
 let streetFaceNorm;
@@ -67,6 +72,9 @@ let bunnyFaceNorm;
 let bunnyFaceTex;
 let bunnySpecular;
 let bunnyDiffuse;
+let bunnyTransformation = mult(translate(1.5,0.6,3),rotateY(90));
+
+
 
 var minT = 0.0;
 var maxT = 1.0;
@@ -82,16 +90,16 @@ let skyboxTexCoord = [
 
 
 // Lighting Properties
-var lightPosition = vec4(-4.0, 3.0, -2.0, 1.0 );
+var lightPosition = vec4(3.0, 2.0, 1.2, 1.0 );
 var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
 var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
 var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
 
-var materialAmbient = vec4(0.5,0.5,0.5,1.0);
+var materialAmbient = vec4(0.3,0.3,0.3,1.0);
 var materialShininess = 20.0;
 
 // Camera Coordinates
-var eye;
+var eye = vec3(4, 3, 3);
 var at = vec3(0.0, 0.0, 0.0);
 var up = vec3(0.0, 1.0, 0.0);
 
@@ -121,6 +129,12 @@ var imagePz = new Image();
 var imageNz = new Image();
 
 let cubeMap;
+
+let camera2Matrix = lookAt(vec3(1,1.5,2.5), vec3(1.5,0.6,3) , up);
+let camera1Matrix = lookAt(eye, at , up);
+
+// MAIN FUNCTION
+
 function main() {
     // Retrieve <canvas> element
     canvas = document.getElementById('webgl');
@@ -145,6 +159,7 @@ function main() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+    // Pass static Values
     gl.uniform4fv(gl.getUniformLocation(program, "lightDiffuse"), flatten(lightDiffuse));
     gl.uniform4fv(gl.getUniformLocation(program, "ligtSpecular"), flatten(lightSpecular));
     gl.uniform4fv(gl.getUniformLocation(program, "lightAmbient"), flatten(lightAmbient));
@@ -156,7 +171,7 @@ function main() {
     shadowmultMatrix = mat4();
     shadowmultMatrix[3][3] = 0;
     shadowmultMatrix[3][2] = -1/lightPosition[2];
-    
+    shadowmultMatrix[3][1] = 0
     setupProjection();
 
     // Depth Testing
@@ -169,6 +184,8 @@ function main() {
     
 }
 
+
+// Load Texture Images for Environment mapping  (Reflection and Refraction)
 
 var imagesLoaded = 0;
 function loadImages(){
@@ -211,6 +228,8 @@ function loadImages(){
     checkImageLoaded();
 }
 
+
+// Check if all Images are loaded
 function checkImageLoaded() {
     if(imagesLoaded == 6){
         configureCubeMapImage();
@@ -225,7 +244,7 @@ function checkImageLoaded() {
 }
 
 
-
+// Create Cube map texture 
 function configureCubeMapImage() {
     cubeMap = gl.createTexture();
     gl.activeTexture(gl.TEXTURE2);
@@ -295,7 +314,7 @@ function keyDownListener(event){
                 setCarAnimation();
             }
             break;
-        case 'v':
+        case 'e':
             if(skyboxOn){
                 skyboxOn = false;
                 gl.uniform1f(gl.getUniformLocation(program, "skyboxTextureCheck"), 0.0);
@@ -337,6 +356,7 @@ function keyDownListener(event){
             }
             else{
                 camera2 = true;
+                setupCamera2();
                 drawObjects();
             }
             break;
@@ -345,6 +365,8 @@ function keyDownListener(event){
     
 }
 
+
+// Skybox Vertices
 var skyboxVertices = [
     vec4( -15, -15,  15, 1.0 ),
     vec4( -15,  15,  15, 1.0 ),
@@ -358,6 +380,7 @@ var skyboxVertices = [
 
 
 
+// Configure Texture for Stop Sign and Skybox
 function configureTexture(image, ind, textureLoc, fragmentLoc) {
 
 	//Create a texture object
@@ -381,9 +404,7 @@ function configureTexture(image, ind, textureLoc, fragmentLoc) {
 }
 
 
-
-
-
+// Create cube for Skybox
 function createCubeArrays(){
     quad( 1, 0, 3, 2 );
     quad( 2, 3, 7, 6 );
@@ -515,10 +536,11 @@ function checkFlag(model){
 }
 
 
+// Create Second camera attached to Car
 function setupCamera2(){
 
     // Camera Matrix (Position, Looking at, Up)
-    modelViewMatrix = lookAt(vec3(1,1.5,2.5), vec3(1.5,0.6,3) , up);
+    modelViewMatrix = camera2Matrix;
 
     // Projection Matrix (FOV, Aspect, Near, Far)
     projectionMatrix = perspective(90,1,0.1,30);
@@ -533,11 +555,11 @@ function setupCamera2(){
 
 
 
-
+// Draw All Objects in the Scene
 function drawObjects(){
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     
-    if(camera2 && !carAnimation){
+    if(camera2){
         setupCamera2();
     }
 
@@ -561,7 +583,6 @@ function drawObjects(){
         drawCar();
         drawBunny();
     }
-    
 }
 
 
@@ -583,8 +604,6 @@ function drawStopSign(){
     // Tranform Object (TRS)
     transformObject("stopSign");
 
-    // Get Stop Texture
-    //getStopTexture();
 
     // Create Buffer
     var vBuffer = gl.createBuffer();
@@ -833,7 +852,7 @@ function drawStreet(){
 
 
 
-// Draw Hierarchy
+// Draw Hierarchy (Car->Bunny->Second Camera)
 function drawHierarchy(){
     stack = [];
 
@@ -845,21 +864,30 @@ function drawHierarchy(){
 
         stack.push(transformationMatrix);
             transformationMatrix = mult(transformationMatrix,translate(0,0.6,1.5));
+            bunnyTransformation = transformationMatrix;
             gl.uniformMatrix4fv(transformationMatrixLoc, false, flatten(transformationMatrix));
             drawBunny();
+            
+                
+            let a = vec3(transformationMatrix[0][3],transformationMatrix[1][3],transformationMatrix[2][3]);
+
+        transformationMatrix = stack.pop();
+            carTransformation = transformationMatrix;
+            modelViewMatrix = lookAt(vec3(transformationMatrix[0][3],transformationMatrix[1][3]+2,transformationMatrix[2][3]-0.5), a, up);
+            camera2Matrix = modelViewMatrix;
             if(camera2){
                 setupCamera2();
-                stack.push(transformationMatrix);
-                    //let translate = vec3(transformationMatrix[0][0],transformationMatrix[3][1],transformationMatrix[3][2]);
-                    //let rotate = vec3()
-                    modelViewMatrix = lookAt(vec3(transformationMatrix[0][3]-0.5,transformationMatrix[1][3]+0.9,transformationMatrix[2][3]-0.5), vec3(transformationMatrix[0][3],transformationMatrix[1][3],transformationMatrix[2][3]), up);
-                    gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-                    //drawBunny();
-                transformationMatrix = stack.pop();
+                gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix));
+            }
+            else{
+                setupProjection();
             }
             
-        transformationMatrix = stack.pop();
+            
+        
+        
     transformationMatrix = stack.pop();
+    
 
 
 }
@@ -944,10 +972,10 @@ function getData(model){
 // Setup Camera and Projection matrix
 function setupProjection(){
     
-    eye = vec3(4, 3, 3);
+    
 
     // Camera Matrix (Position, Looking at, Up)
-    modelViewMatrix = lookAt(eye, at , up);
+    modelViewMatrix = camera1Matrix;
 
     // Projection Matrix (FOV, Aspect, Near, Far)
     projectionMatrix = perspective(90,1,0.1,30);
@@ -966,13 +994,18 @@ let alpha = 0;
 function rotateCamera(){
     if (alpha>=360)
         alpha = 0;
-    modelViewMatrix = lookAt(vec3(mult(rotateY(alpha++),vec4(eye))), at, up);
+    alpha+=0.5;
 
+    //Translate up and down and then rotate around the center
+    modelViewMatrix = lookAt(vec3(mult(translate(0,Math.sin(alpha*Math.PI/180),0),mult(rotateY(alpha),vec4(eye)))), at, up);
 
+    camera1Matrix = modelViewMatrix;
     gl.uniformMatrix4fv(modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-    //gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix) );
     cameraAnimReq = requestAnimationFrame(rotateCamera);
     drawObjects();
+
+    if(carAnimation)
+        drawHierarchy();
 }
 
 
@@ -1007,14 +1040,14 @@ function transformObject(name) {
             break;
         case "car":
             rotateMatrix = rotateY(90);
-            transformationMatrix = mult(translate(0,0,3),rotateMatrix);
+            transformationMatrix = carTransformation;
             break;
         case "street":
             transformationMatrix = translate(0,0,0);
             break;
         case "bunny":
             rotateMatrix = rotateY(90);
-            transformationMatrix = mult(translate(1.5,0.6,3),rotateMatrix);
+            transformationMatrix = bunnyTransformation;
             break;
     }
     
@@ -1023,30 +1056,12 @@ function transformObject(name) {
 }
 
 // Set Car Animation
+let carAlpha = 0.0;
 function setCarAnimation(){
+    if(carAlpha >=360)
+        carAlpha = 0.0;
     drawObjects();
     drawHierarchy();
     carAnimReq = requestAnimationFrame(setCarAnimation);
 }
 
-// Animate Car
-let carAlpha = 0;
-function animateCar(){
-    if (carAlpha>=360)
-        carAlpha = 0;
-
-    //transformationMatrix = mult(rotateY(carAlpha++),mult(translate(0,0,3),rotateY(90)));
-    //gl.uniformMatrix4fv(transformationMatrixLoc, false,flatten(transformationMatrix));
-
-    drawHierarchy()
-    //carAnimReq = requestAnimationFrame(animateCar);
-    //drawCar();
-}
-
-
-
-
-// render mesh
-function render(){
-    
-}
