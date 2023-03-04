@@ -1,6 +1,6 @@
-
+// GLITCHES
 // SKYBOX WILL GET THE RIGHT TEXTURE THE 2nd time
-
+// STOP TEXTURE LOADS AFTER ANY ACTION BASED KEYPRESS
 
 let canvas;
 let gl;
@@ -635,29 +635,6 @@ function drawStopSign(){
     gl.drawArrays(gl.TRIANGLES,0,stopSignPoints.length);
 
 
-    // Shadow Projection Attempt
-    /*
-    if(lightOn && shadowOn){
-        let shadowMatrix = translate(lightPosition[0],lightPosition[1],lightPosition[2]);
-        shadowMatrix = mult(shadowMatrix,shadowmultMatrix);
-        shadowMatrix = mult(shadowMatrix, translate(-lightPosition[0],-lightPosition[1],-lightPosition[2]));
-        let temp = modelViewMatrix;
-        modelViewMatrix = mult(mult(modelViewMatrix,transformationMatrix),shadowMatrix);
-        gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-
-        var n=0;
-        for(var i=0;i<stopSign.faces.length;i++){
-            var faces = stopSign.faces[i];
-            //gl.uniform4fv(gl.getUniformLocation(program,"materialDiffuse"), flatten(car.diffuseMap.get(faces.material)));
-            //gl.uniform4fv(gl.getUniformLocation(program,"materialSpecular"), flatten(car.specularMap.get(faces.material)));
-            gl.drawArrays(gl.TRIANGLES,n,faces.faceVertices.length);
-            n=n+faces.faceVertices.length;
-        }
-        modelViewMatrix = temp;
-        gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-    }
-    */
-
 }
 
 
@@ -741,29 +718,6 @@ function drawCar(){
         n=n+faces.faceVertices.length;
     }
     gl.uniform1f(gl.getUniformLocation(program, "carReflectCheck"), 0.0);
-
-    /*
-    if(lightOn && shadowOn){
-        let shadowMatrix = translate(lightPosition[0],lightPosition[1],lightPosition[2]);
-        shadowMatrix = mult(shadowMatrix,shadowmultMatrix);
-        shadowMatrix = mult(shadowMatrix, translate(-lightPosition[0],-lightPosition[1],-lightPosition[2]));
-        let temp = modelViewMatrix;
-        modelViewMatrix = mult(modelViewMatrix,shadowMatrix);
-        gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-
-        var n=0;
-        for(var i=0;i<car.faces.length;i++){
-            var faces = car.faces[i];
-            //gl.uniform4fv(gl.getUniformLocation(program,"materialDiffuse"), flatten(car.diffuseMap.get(faces.material)));
-            //gl.uniform4fv(gl.getUniformLocation(program,"materialSpecular"), flatten(car.specularMap.get(faces.material)));
-            gl.drawArrays(gl.TRIANGLES,n,faces.faceVertices.length);
-            n=n+faces.faceVertices.length;
-        }
-        modelViewMatrix = temp;
-        gl.uniformMatrix4fv( modelViewMatrixLoc, false, flatten(modelViewMatrix) );
-    }
-    
-    */
 
 }
 
